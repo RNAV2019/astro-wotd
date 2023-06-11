@@ -35,5 +35,5 @@ Start the server
 ```
 
 
-![Logo](https://raw.githubusercontent.com/RNAV2019/astro-wotd/master/public/icon-512x512.png?token=GHSAT0AAAAAACDFXC7SDXVZL7ICGBYNXX2EZEFTJJQ)
+![Logo](public/icon-512x512.png)
 
