@@ -4,12 +4,12 @@ import Card from "../components/Card.astro";
 import * as cheerio from "cheerio";
 import {
 	definitionString,
-	firstExampleString,
-	secondExampleString,
+	exampleString,
 	typeOfWordString,
 	url,
 	wordString,
 } from "../utils/helper";
+import { Github } from "../components/Github";
 
 interface WordProps {
 	word: string;
@@ -55,7 +55,7 @@ if (checks) {
 	word = $(wordString).text();
 	definition = $(definitionString).text();
 	typeOfWord = $(typeOfWordString).text();
-	example = $(firstExampleString).text().replace(/^\/\//, "");
+	example = $(exampleString).text().replace(/^\/\//, "");
 	localStorage.setItem("word", word);
 	localStorage.setItem("definition", definition);
 	localStorage.setItem("typeOfWord", typeOfWord);
@@ -82,7 +82,7 @@ if (checks) {
 		>
 			Word of the day
 		</h1>
-		<div class='flex flex-col justify-center items-center gap-6'>
+		<div class='flex flex-col justify-center items-center gap-6 mb-8'>
 			<p class='text-5xl font-bold capitalize underline underline-offset-8'>
 				{word}
 			</p>
@@ -96,5 +96,8 @@ if (checks) {
 				<Card text={example!} />
 			</div>
 		</div>
+		<a href='https://github.com/RNAV2019/astro-wotd' target='_blank'>
+			<Github fontSize={40} />
+		</a>
 	</main>
 </Layout>
