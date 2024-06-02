@@ -3,42 +3,42 @@ import Layout from "../layouts/Layout.astro";
 import Card from "../components/Card.astro";
 import * as cheerio from "cheerio";
 import {
-    definitionString,
-    exampleString,
-    typeOfWordString,
-    url,
-    wordString,
+	definitionString,
+	exampleString,
+	typeOfWordString,
+	url,
+	wordString,
 } from "../utils/helper";
 import { Github } from "../components/Github";
 import { Speaker } from "../components/Speaker";
 import { Palette } from "../components/palette";
 
 interface WordProps {
-    word: string;
-    definition: string;
-    typeOfWord: string;
-    examples: examplesType;
+	word: string;
+	definition: string;
+	typeOfWord: string;
+	examples: examplesType;
 }
 type examplesType = {
-    first: string;
-    second: string;
+	first: string;
+	second: string;
 };
 
 const checks =
-    localStorage.getItem("date") !=
-        new Date().toJSON().slice(0, 10).replace(/-/g, "/") ||
-    localStorage.getItem("word") == null ||
-    localStorage.getItem("definition") == null ||
-    localStorage.getItem("typeOfWord") == null ||
-    localStorage.getItem("example") == null ||
-    localStorage.getItem("word") == undefined ||
-    localStorage.getItem("definition") == undefined ||
-    localStorage.getItem("typeOfWord") == undefined ||
-    localStorage.getItem("example") == undefined ||
-    localStorage.getItem("word") == "" ||
-    localStorage.getItem("definition") == "" ||
-    localStorage.getItem("typeOfWord") == "" ||
-    localStorage.getItem("example") == "";
+	localStorage.getItem("date") !=
+		new Date().toJSON().slice(0, 10).replace(/-/g, "/") ||
+	localStorage.getItem("word") == null ||
+	localStorage.getItem("definition") == null ||
+	localStorage.getItem("typeOfWord") == null ||
+	localStorage.getItem("example") == null ||
+	localStorage.getItem("word") == undefined ||
+	localStorage.getItem("definition") == undefined ||
+	localStorage.getItem("typeOfWord") == undefined ||
+	localStorage.getItem("example") == undefined ||
+	localStorage.getItem("word") == "" ||
+	localStorage.getItem("definition") == "" ||
+	localStorage.getItem("typeOfWord") == "" ||
+	localStorage.getItem("example") == "";
 
 // Storing data in local storage
 
@@ -48,196 +48,193 @@ let typeOfWord = localStorage.getItem("typeOfWord");
 let example = localStorage.getItem("example");
 
 if (checks) {
-    const resp = await fetch(url);
-    if (resp.status === 404) {
-        console.log("ERROR 404");
-    }
-    const page = await resp.text();
-    const $ = cheerio.load(page);
-    word = $(wordString).text();
-    definition = $(definitionString).text();
-    typeOfWord = $(typeOfWordString).text();
-    example = $(exampleString).text().replace(/^\/\//, "");
-    localStorage.setItem("word", word);
-    localStorage.setItem("definition", definition);
-    localStorage.setItem("typeOfWord", typeOfWord);
-    localStorage.setItem("example", example);
-    localStorage.setItem(
-        "date",
-        new Date().toJSON().slice(0, 10).replace(/-/g, "/"),
-    );
+	const resp = await fetch(url);
+	if (resp.status === 404) {
+		console.log("ERROR 404");
+	}
+	const page = await resp.text();
+	const $ = cheerio.load(page);
+	word = $(wordString).text();
+	definition = $(definitionString).text();
+	typeOfWord = $(typeOfWordString).text();
+	example = $(exampleString).text().replace(/^\/\//, "");
+	localStorage.setItem("word", word);
+	localStorage.setItem("definition", definition);
+	localStorage.setItem("typeOfWord", typeOfWord);
+	localStorage.setItem("example", example);
+	localStorage.setItem(
+		"date",
+		new Date().toJSON().slice(0, 10).replace(/-/g, "/")
+	);
 } else {
-    word = localStorage.getItem("word");
-    definition = localStorage.getItem("definition");
-    typeOfWord = localStorage.getItem("typeOfWord");
-    example = localStorage.getItem("example");
+	word = localStorage.getItem("word");
+	definition = localStorage.getItem("definition");
+	typeOfWord = localStorage.getItem("typeOfWord");
+	example = localStorage.getItem("example");
 }
 ---
 
 <script>
-    // LOADING THEME FROM LOCALSTORAGE
-    let loadedTheme = localStorage.getItem("theme");
-    const themeTags = document.getElementsByClassName("themed");
-    const allColoursToRemove = [
-        "from-purple-600",
-        "to-pink-600",
-        "from-red-400",
-        "to-red-600",
-        "from-[#264653]",
-        "to-[#2A9D8F]",
-    ];
-    if (loadedTheme == "default") {
-        Array.from(themeTags).forEach((element) => {
-            element?.classList.remove(...allColoursToRemove);
-            element?.classList.add("from-purple-600", "to-pink-600");
-        });
-    } else if (loadedTheme == "red") {
-        Array.from(themeTags).forEach((element) => {
-            element?.classList.remove(...allColoursToRemove);
-            element?.classList.add("from-red-400", "to-red-600");
-        });
-    } else if (loadedTheme == "deepBlue") {
-        Array.from(themeTags).forEach((element) => {
-            element?.classList.remove(...allColoursToRemove);
-            element?.classList.add("from-[#264653]", "to-[#2A9D8F]");
-        });
-    }
+	// LOADING THEME FROM LOCALSTORAGE
+	let loadedTheme = localStorage.getItem("theme");
+	const themeTags = document.getElementsByClassName("themed");
+	const allColoursToRemove = [
+		"from-purple-600",
+		"to-pink-600",
+		"from-red-400",
+		"to-red-600",
+		"from-[#264653]",
+		"to-[#2A9D8F]",
+	];
+	if (loadedTheme == "default") {
+		Array.from(themeTags).forEach((element) => {
+			element?.classList.remove(...allColoursToRemove);
+			element?.classList.add("from-purple-600", "to-pink-600");
+		});
+	} else if (loadedTheme == "red") {
+		Array.from(themeTags).forEach((element) => {
+			element?.classList.remove(...allColoursToRemove);
+			element?.classList.add("from-red-400", "to-red-600");
+		});
+	} else if (loadedTheme == "deepBlue") {
+		Array.from(themeTags).forEach((element) => {
+			element?.classList.remove(...allColoursToRemove);
+			element?.classList.add("from-[#264653]", "to-[#2A9D8F]");
+		});
+	}
 
-    const fab = document.getElementById("fab");
-    const modal = document.getElementById("modal");
-    const defaultThemeButton = document.getElementById("default-theme");
-    const redThemeButton = document.getElementById("red-theme");
-    const deepBlueThemeButton = document.getElementById("deep-blue-theme");
+	const fab = document.getElementById("fab");
+	const modal = document.getElementById("modal");
+	const defaultThemeButton = document.getElementById("default-theme");
+	const redThemeButton = document.getElementById("red-theme");
+	const deepBlueThemeButton = document.getElementById("deep-blue-theme");
 
-    defaultThemeButton?.addEventListener("click", function () {
-        Array.from(themeTags).forEach((element) => {
-            element?.classList.remove(...allColoursToRemove);
-            element?.classList.add("from-purple-600", "to-pink-600");
-            localStorage.setItem("theme", "default");
-        });
-        modal?.classList.add("hidden");
-    });
+	defaultThemeButton?.addEventListener("click", function () {
+		Array.from(themeTags).forEach((element) => {
+			element?.classList.remove(...allColoursToRemove);
+			element?.classList.add("from-purple-600", "to-pink-600");
+			localStorage.setItem("theme", "default");
+		});
+		modal?.classList.add("hidden");
+	});
 
-    redThemeButton?.addEventListener("click", function () {
-        Array.from(themeTags).forEach((element) => {
-            element?.classList.remove(...allColoursToRemove);
-            element?.classList.add("from-red-400", "to-red-600");
-            localStorage.setItem("theme", "red");
-        });
-        modal?.classList.add("hidden");
-    });
+	redThemeButton?.addEventListener("click", function () {
+		Array.from(themeTags).forEach((element) => {
+			element?.classList.remove(...allColoursToRemove);
+			element?.classList.add("from-red-400", "to-red-600");
+			localStorage.setItem("theme", "red");
+		});
+		modal?.classList.add("hidden");
+	});
 
-    deepBlueThemeButton?.addEventListener("click", function () {
-        Array.from(themeTags).forEach((element) => {
-            element?.classList.remove(...allColoursToRemove);
-            element?.classList.add("from-[#264653]", "to-[#2A9D8F]");
-            localStorage.setItem("theme", "deepBlue");
-        });
-        modal?.classList.add("hidden");
-    });
+	deepBlueThemeButton?.addEventListener("click", function () {
+		Array.from(themeTags).forEach((element) => {
+			element?.classList.remove(...allColoursToRemove);
+			element?.classList.add("from-[#264653]", "to-[#2A9D8F]");
+			localStorage.setItem("theme", "deepBlue");
+		});
+		modal?.classList.add("hidden");
+	});
 
-    fab?.addEventListener("click", function () {
-        modal?.classList.toggle("hidden");
-    });
+	fab?.addEventListener("click", function () {
+		modal?.classList.toggle("hidden");
+	});
 
-    modal?.addEventListener("click", function () {
-        modal?.classList.add("hidden");
-    });
+	modal?.addEventListener("click", function () {
+		modal?.classList.add("hidden");
+	});
 
-    let word = document.getElementById("word")?.innerText;
+	let word = document.getElementById("word")?.innerText;
 
-    // Create a new SpeechSynthesisUtterance instance
-    const wordUtterance = new SpeechSynthesisUtterance(word!);
+	// Create a new SpeechSynthesisUtterance instance
+	const wordUtterance = new SpeechSynthesisUtterance(word!);
 
-    // Preload the audio when the website initially loads
-    window.speechSynthesis.speak(wordUtterance);
-    window.speechSynthesis.cancel();
+	// Preload the audio when the website initially loads
+	window.speechSynthesis.speak(wordUtterance);
+	window.speechSynthesis.cancel();
 
-    let wordSpeakerButton = document.getElementById("wordSpeakerButton");
-    wordSpeakerButton?.addEventListener("click", () => {
-        window.speechSynthesis.speak(wordUtterance);
-    });
+	let wordSpeakerButton = document.getElementById("wordSpeakerButton");
+	wordSpeakerButton?.addEventListener("click", () => {
+		window.speechSynthesis.speak(wordUtterance);
+	});
 </script>
-<Layout title="Astro WOTD">
-    <div
-        id="modal"
-        class="fixed inset-0 z-50 flex justify-center items-center bg-black bg-opacity-75 hidden"
-    >
-        <div
-            class="bg-slate-950 text-white p-8 rounded-lg border-2 border-slate-800"
-        >
-            <h2 class="text-lg font-bold mb-4">Select Theme</h2>
-            <div class="flex flex-row justify-between mb-4 gap-6">
-                <button
-                    class="w-64 border-2 border-slate-800 rounded-md py-4 px-6 hover:border-slate-200 transition-colors"
-                    id="default-theme"
-                >
-                    <p>Default</p>
-                    <img src="/themes/default_theme.png" alt="Default theme" />
-                </button>
-                <button
-                    class="w-64 border-2 border-slate-800 rounded-md py-4 px-6 hover:border-slate-200 transition-colors"
-                    id="red-theme"
-                >
-                    <p>Red Theme</p>
-                    <img src="/themes/red_theme.png" alt="Red theme" />
-                </button>
-                <button
-                    class="w-64 border-2 border-slate-800 rounded-md py-4 px-6 hover:border-slate-200 transition-colors"
-                    id="deep-blue-theme"
-                >
-                    <p>Deep Blue Theme</p>
-                    <img
-                        src="/themes/deep_blue_theme.png"
-                        alt="Deep Blue theme"
-                    />
-                </button>
-            </div>
-        </div>
-    </div>
-    <main
-        class="flex h-screen w-screen flex-col items-center justify-center bg-slate-950 p-4 text-white"
-    >
-        <h1
-            class="m-4 bg-gradient-to-r from-purple-600 to-pink-600 themed bg-clip-text text-2xl font-extrabold uppercase text-transparent sm:text-xl"
-        >
-            Word of the day
-        </h1>
-        <div class="mb-8 flex flex-col items-center justify-center gap-6">
-            <div class="flex flex-row items-baseline relative">
-                <p
-                    class="text-5xl font-bold capitalize underline underline-offset-8"
-                    id="word"
-                >
-                    {word}
-                </p>
-                <Speaker
-                    fontSize={32}
-                    id="wordSpeakerButton"
-                    className="absolute right-[-20%] top-[-5%] translate-y-[50%]"
-                />
-            </div>
+<Layout title='Astro WOTD'>
+	<div
+		id='modal'
+		class='fixed inset-0 z-50 flex justify-center items-center bg-black bg-opacity-75 hidden'
+	>
+		<div
+			class='bg-slate-950 text-white p-8 rounded-lg border-2 border-slate-800'
+		>
+			<h2 class='text-lg font-bold mb-4'>Select Theme</h2>
+			<div class='flex flex-col md:flex-row justify-between mb-4 gap-6'>
+				<button
+					class='w-64 border-2 border-slate-800 rounded-md py-4 px-6 hover:border-slate-200 transition-colors'
+					id='default-theme'
+				>
+					<p>Default</p>
+					<img src='/themes/default_theme.png' alt='Default theme' />
+				</button>
+				<button
+					class='w-64 border-2 border-slate-800 rounded-md py-4 px-6 hover:border-slate-200 transition-colors'
+					id='red-theme'
+				>
+					<p>Red Theme</p>
+					<img src='/themes/red_theme.png' alt='Red theme' />
+				</button>
+				<button
+					class='w-64 border-2 border-slate-800 rounded-md py-4 px-6 hover:border-slate-200 transition-colors'
+					id='deep-blue-theme'
+				>
+					<p>Deep Blue Theme</p>
+					<img src='/themes/deep_blue_theme.png' alt='Deep Blue theme' />
+				</button>
+			</div>
+		</div>
+	</div>
+	<main
+		class='flex h-screen w-screen flex-col items-center justify-center bg-slate-950 p-4 text-white'
+	>
+		<h1
+			class='m-4 bg-gradient-to-r from-purple-600 to-pink-600 themed bg-clip-text text-2xl font-extrabold uppercase text-transparent sm:text-xl'
+		>
+			Word of the day
+		</h1>
+		<div class='mb-8 flex flex-col items-center justify-center gap-6'>
+			<div class='flex flex-row items-baseline relative'>
+				<p
+					class='text-5xl font-bold capitalize underline underline-offset-8'
+					id='word'
+				>
+					{word}
+				</p>
+				<Speaker
+					fontSize={32}
+					id='wordSpeakerButton'
+					className='absolute right-[-20%] top-[-5%] translate-y-[50%]'
+				/>
+			</div>
 
-            <span
-                class="whitespace-nowrap rounded-full bg-gradient-to-r px-3.5 py-1.5 text-sm capitalize text-white from-purple-600 to-pink-600 themed"
-            >
-                {typeOfWord}
-            </span>
-            <p class="w-3/4 text-center text-lg font-medium">{definition}</p>
-            <div class="w-3/4">
-                <Card text={example!} />
-            </div>
-        </div>
-        <a href="https://github.com/RNAV2019/astro-wotd" target="_blank">
-            <Github fontSize={40} />
-        </a>
-        <div class="fixed bottom-4 right-4">
-            <button
-                class="bg-gradient-to-r from-purple-600 to-pink-600 themed text-white font-bold p-3 rounded-full shadow-lg"
-                id="fab"
-            >
-                <Palette fontSize={20} />
-            </button>
-        </div>
-    </main>
+			<span
+				class='whitespace-nowrap rounded-full bg-gradient-to-r px-3.5 py-1.5 text-sm capitalize text-white from-purple-600 to-pink-600 themed'
+			>
+				{typeOfWord}
+			</span>
+			<p class='w-3/4 text-center text-lg font-medium'>{definition}</p>
+			<div class='w-3/4'>
+				<Card text={example!} />
+			</div>
+		</div>
+		<a href='https://github.com/RNAV2019/astro-wotd' target='_blank'>
+			<Github fontSize={40} />
+		</a>
+		<div class='fixed bottom-4 right-4'>
+			<button
+				class='bg-gradient-to-r from-purple-600 to-pink-600 themed text-white font-bold p-3 rounded-full shadow-lg'
+				id='fab'
+			>
+				<Palette fontSize={20} />
+			</button>
+		</div>
+	</main>
 </Layout>
