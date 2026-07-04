@@ -1,7 +1,4 @@
 ---
-import { Speaker } from "./Speaker";
-
-// Card Component
 export interface Props {
 	text: string;
 }
@@ -9,33 +6,48 @@ export interface Props {
 const { text } = Astro.props;
 ---
 
-<script>
-	let exampleSentence = document.getElementById("exampleSentence")?.innerText;
-
-	// Create a new SpeechSynthesisUtterance instance
-	const exampleSentenceUtterance = new SpeechSynthesisUtterance(
-		exampleSentence!
-	);
-
-	// Preload the audio when the website initially loads
-	window.speechSynthesis.speak(exampleSentenceUtterance);
-	window.speechSynthesis.cancel();
-
-	let exampleSentenceSpeakerButton = document.getElementById(
-		"exampleSentenceSpeakerButton"
-	);
-	exampleSentenceSpeakerButton?.addEventListener("click", () => {
-		window.speechSynthesis.speak(exampleSentenceUtterance);
-	});
-</script>
 <div
-	class='rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 themed p-1 shadow-xl text-white'
+	class="w-full overflow-hidden rounded-lg border"
+	style="border-color: var(--border);"
 >
-	<div class='block rounded-xl bg-slate-950 p-4 sm:p-6 lg:p-8 w-full h-full'>
-		<div class='flex flex-row gap-3 items-center'>
-			<h3 class='text-xl font-bold sm:text-2xl'>Example</h3>
-			<Speaker fontSize={26} id='exampleSentenceSpeakerButton' />
-		</div>
-		<p class='mt-2 text-lg' id='exampleSentence'>{text}</p>
+	<div
+		class="flex items-center justify-between border-b px-4 py-2.5"
+		style="background: var(--bg-surface); border-color: var(--border);"
+	>
+		<span
+			class="text-xs font-semibold tracking-widest uppercase"
+			style="color: var(--text-muted); font-family: var(--font-sans);"
+		>
+			Example
+		</span>
+		<button
+			id="example-tts"
+			style="color: var(--text-subtle);"
+			aria-label="Pronounce example"
+		>
+			<!-- Volume1 icon (Lucide) -->
+			<svg
+				width="15"
+				height="15"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+				<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+			</svg>
+		</button>
+	</div>
+	<div class="px-4 py-4" style="background: var(--bg);">
+		<p
+			id="example-sentence"
+			class="text-sm leading-relaxed italic"
+			style="color: var(--text-muted); font-family: var(--font-serif);"
+		>
+			{text}
+		</p>
 	</div>
 </div>

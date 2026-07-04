@@ -1,7 +1,7 @@
 
 # Astro WOTD
 
-A simple web app to display a random word, the definition and an example of the word in a sentence. The data is fetched from merriam webster dictionary and cached into localstorage.
+A simple web app to display a random word, the definition and an example of the word in a sentence. The data is fetched from wordnik and cached into localstorage.
 
 ## Demo
 
@@ -25,15 +25,17 @@ Go to the project directory
 Install dependencies
 
 ```bash
-  yarn install
+  bun install
 ```
+
+Add your API key from wordnik in the .env file
 
 Start the server
 
 ```bash
-  yarn dev
+  bun dev
 ```
 
 
-![Logo](public/icon-512x512.png)
+![Logo](public/icon-384x384.png)
 

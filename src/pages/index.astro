@@ -1,240 +1,344 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Card from "../components/Card.astro";
-import * as cheerio from "cheerio";
-import {
-	definitionString,
-	exampleString,
-	typeOfWordString,
-	url,
-	wordString,
-} from "../utils/helper";
-import { Github } from "../components/Github";
-import { Speaker } from "../components/Speaker";
-import { Palette } from "../components/palette";
 
-interface WordProps {
-	word: string;
-	definition: string;
-	typeOfWord: string;
-	examples: examplesType;
-}
-type examplesType = {
-	first: string;
-	second: string;
-};
-
-const checks =
-	localStorage.getItem("date") !=
-		new Date().toJSON().slice(0, 10).replace(/-/g, "/") ||
-	localStorage.getItem("word") == null ||
-	localStorage.getItem("definition") == null ||
-	localStorage.getItem("typeOfWord") == null ||
-	localStorage.getItem("example") == null ||
-	localStorage.getItem("word") == undefined ||
-	localStorage.getItem("definition") == undefined ||
-	localStorage.getItem("typeOfWord") == undefined ||
-	localStorage.getItem("example") == undefined ||
-	localStorage.getItem("word") == "" ||
-	localStorage.getItem("definition") == "" ||
-	localStorage.getItem("typeOfWord") == "" ||
-	localStorage.getItem("example") == "";
-
-// Storing data in local storage
-
-let word = localStorage.getItem("word");
-let definition = localStorage.getItem("definition");
-let typeOfWord = localStorage.getItem("typeOfWord");
-let example = localStorage.getItem("example");
-
-if (checks) {
-	const resp = await fetch(url);
-	if (resp.status === 404) {
-		console.log("ERROR 404");
-	}
-	const page = await resp.text();
-	const $ = cheerio.load(page);
-	word = $(wordString).text();
-	definition = $(definitionString).text();
-	typeOfWord = $(typeOfWordString).text();
-	example = $(exampleString).text().replace(/^\/\//, "");
-	localStorage.setItem("word", word);
-	localStorage.setItem("definition", definition);
-	localStorage.setItem("typeOfWord", typeOfWord);
-	localStorage.setItem("example", example);
-	localStorage.setItem(
-		"date",
-		new Date().toJSON().slice(0, 10).replace(/-/g, "/")
-	);
-} else {
-	word = localStorage.getItem("word");
-	definition = localStorage.getItem("definition");
-	typeOfWord = localStorage.getItem("typeOfWord");
-	example = localStorage.getItem("example");
-}
+const today = new Date().toLocaleDateString("en-US", {
+	month: "long",
+	day: "numeric",
+	year: "numeric",
+});
 ---
 
 <script>
-	// LOADING THEME FROM LOCALSTORAGE
-	let loadedTheme = localStorage.getItem("theme");
-	const themeTags = document.getElementsByClassName("themed");
-	const allColoursToRemove = [
-		"from-purple-600",
-		"to-pink-600",
-		"from-red-400",
-		"to-red-600",
-		"from-[#264653]",
-		"to-[#2A9D8F]",
-	];
-	if (loadedTheme == "default") {
-		Array.from(themeTags).forEach((element) => {
-			element?.classList.remove(...allColoursToRemove);
-			element?.classList.add("from-purple-600", "to-pink-600");
-		});
-	} else if (loadedTheme == "red") {
-		Array.from(themeTags).forEach((element) => {
-			element?.classList.remove(...allColoursToRemove);
-			element?.classList.add("from-red-400", "to-red-600");
-		});
-	} else if (loadedTheme == "deepBlue") {
-		Array.from(themeTags).forEach((element) => {
-			element?.classList.remove(...allColoursToRemove);
-			element?.classList.add("from-[#264653]", "to-[#2A9D8F]");
-		});
+	interface WordData {
+		word: string;
+		typeOfWord: string;
+		definition: string;
+		example: string;
+		audioUrl: string | null;
+		date: string;
 	}
 
-	const fab = document.getElementById("fab");
-	const modal = document.getElementById("modal");
-	const defaultThemeButton = document.getElementById("default-theme");
-	const redThemeButton = document.getElementById("red-theme");
-	const deepBlueThemeButton = document.getElementById("deep-blue-theme");
+	const todayKey = new Date().toISOString().split("T")[0];
 
-	defaultThemeButton?.addEventListener("click", function () {
-		Array.from(themeTags).forEach((element) => {
-			element?.classList.remove(...allColoursToRemove);
-			element?.classList.add("from-purple-600", "to-pink-600");
-			localStorage.setItem("theme", "default");
-		});
-		modal?.classList.add("hidden");
+	function renderWord(data: WordData) {
+		const wordEl = document.getElementById("word") as HTMLElement;
+		const typeEl = document.getElementById("type-of-word") as HTMLElement;
+		const defEl = document.getElementById("definition") as HTMLElement;
+		const exampleEl = document.getElementById(
+			"example-sentence"
+		) as HTMLElement;
+		const exampleCard = document.getElementById(
+			"example-card"
+		) as HTMLElement;
+		const contentEl = document.getElementById("word-content") as HTMLElement;
+
+		if (wordEl) wordEl.textContent = data.word;
+		if (typeEl) {
+			typeEl.textContent = data.typeOfWord;
+			typeEl.style.display = data.typeOfWord ? "inline-block" : "none";
+		}
+		if (defEl)
+			defEl.textContent = data.definition
+				? `“${data.definition}”`
+				: "";
+		if (exampleEl) exampleEl.textContent = data.example;
+		if (exampleCard)
+			exampleCard.style.display = data.example ? "block" : "none";
+
+		// Fade in
+		if (contentEl) {
+			contentEl.style.opacity = "1";
+			contentEl.style.transform = "translateY(0)";
+		}
+
+		setupTTS(data.word, data.example, data.audioUrl ?? null);
+	}
+
+	// ── TTS ──────────────────────────────────────────────────────────────────
+	// Primary: Wordnik audio URL → HTML5 Audio (works on all platforms/OSes).
+	// Fallback: Web Speech API (works when browser has a TTS engine installed).
+
+	let cachedVoice: SpeechSynthesisVoice | null = null;
+
+	function initVoices() {
+		const pick = () => {
+			const vs = window.speechSynthesis.getVoices();
+			return (
+				vs.find((v) => v.lang === "en-US" && v.localService) ??
+				vs.find((v) => v.lang === "en-GB" && v.localService) ??
+				vs.find((v) => v.lang.startsWith("en") && v.localService) ??
+				vs.find((v) => v.lang.startsWith("en")) ??
+				null
+			);
+		};
+		cachedVoice = pick();
+		if (!cachedVoice) {
+			window.speechSynthesis.addEventListener(
+				"voiceschanged",
+				() => { cachedVoice = pick(); },
+				{ once: true }
+			);
+		}
+	}
+
+	function speakWithSynthesis(text: string) {
+		const synth = window.speechSynthesis;
+		synth.cancel();
+		synth.resume(); // Chrome pauses the queue after ~15 s; resume() unblocks it
+		const u = new SpeechSynthesisUtterance(text);
+		if (cachedVoice) u.voice = cachedVoice;
+		u.rate = 0.9;
+		synth.speak(u);
+	}
+
+	function speakWord(word: string, audioUrl: string | null) {
+		if (audioUrl) {
+			const audio = new Audio(audioUrl);
+			audio.play().catch(() => speakWithSynthesis(word));
+			return;
+		}
+		speakWithSynthesis(word);
+	}
+
+	initVoices();
+
+	function setupTTS(word: string, example: string, audioUrl: string | null) {
+		function rewire(id: string, handler: () => void) {
+			const old = document.getElementById(id);
+			if (!old) return;
+			const fresh = old.cloneNode(true) as HTMLElement;
+			old.parentNode?.replaceChild(fresh, old);
+			fresh.addEventListener("click", handler);
+		}
+
+		rewire("word-tts", () => speakWord(word, audioUrl));
+		if (example) rewire("example-tts", () => speakWithSynthesis(example));
+	}
+
+	async function fetchWord(): Promise<WordData | null> {
+		try {
+			const resp = await fetch("/api/word.json");
+			if (!resp.ok) return null;
+			const data = await resp.json();
+			return { ...data, date: todayKey };
+		} catch {
+			return null;
+		}
+	}
+
+	async function loadWord() {
+		const raw = localStorage.getItem("wotd");
+		const cached: WordData | null = raw ? JSON.parse(raw) : null;
+
+		if (cached?.date === todayKey) {
+			// Serve cached word immediately, revalidate silently in background
+			renderWord(cached);
+			fetchWord().then((fresh) => {
+				if (fresh) localStorage.setItem("wotd", JSON.stringify(fresh));
+			});
+		} else {
+			// No valid cache — fetch and render
+			const data = await fetchWord();
+			if (data) {
+				localStorage.setItem("wotd", JSON.stringify(data));
+				renderWord(data);
+			}
+		}
+	}
+
+	// Initial load
+	loadWord();
+
+	// When tab regains focus: check if the date rolled over and refresh if so
+	document.addEventListener("visibilitychange", () => {
+		if (document.hidden) return;
+		const currentKey = new Date().toISOString().split("T")[0];
+		if (currentKey !== todayKey) {
+			window.location.reload();
+		} else {
+			// Silently revalidate in the background
+			fetchWord().then((fresh) => {
+				if (fresh) localStorage.setItem("wotd", JSON.stringify(fresh));
+			});
+		}
 	});
 
-	redThemeButton?.addEventListener("click", function () {
-		Array.from(themeTags).forEach((element) => {
-			element?.classList.remove(...allColoursToRemove);
-			element?.classList.add("from-red-400", "to-red-600");
-			localStorage.setItem("theme", "red");
-		});
-		modal?.classList.add("hidden");
+	// Theme toggle
+	const toggle = document.getElementById("theme-toggle");
+	const html = document.documentElement;
+
+	function syncToggle() {
+		const isDark = html.getAttribute("data-theme") === "dark";
+		const sunIcon = document.getElementById("sun-icon");
+		const moonIcon = document.getElementById("moon-icon");
+		const label = document.getElementById("theme-label");
+		if (sunIcon) sunIcon.style.display = isDark ? "none" : "block";
+		if (moonIcon) moonIcon.style.display = isDark ? "block" : "none";
+		if (label) label.textContent = isDark ? "Dark" : "Light";
+	}
+
+	toggle?.addEventListener("click", () => {
+		const next =
+			html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+		html.setAttribute("data-theme", next);
+		localStorage.setItem("theme", next);
+		syncToggle();
 	});
 
-	deepBlueThemeButton?.addEventListener("click", function () {
-		Array.from(themeTags).forEach((element) => {
-			element?.classList.remove(...allColoursToRemove);
-			element?.classList.add("from-[#264653]", "to-[#2A9D8F]");
-			localStorage.setItem("theme", "deepBlue");
-		});
-		modal?.classList.add("hidden");
-	});
-
-	fab?.addEventListener("click", function () {
-		modal?.classList.toggle("hidden");
-	});
-
-	modal?.addEventListener("click", function () {
-		modal?.classList.add("hidden");
-	});
-
-	let word = document.getElementById("word")?.innerText;
-
-	// Create a new SpeechSynthesisUtterance instance
-	const wordUtterance = new SpeechSynthesisUtterance(word!);
-
-	// Preload the audio when the website initially loads
-	window.speechSynthesis.speak(wordUtterance);
-	window.speechSynthesis.cancel();
-
-	let wordSpeakerButton = document.getElementById("wordSpeakerButton");
-	wordSpeakerButton?.addEventListener("click", () => {
-		window.speechSynthesis.speak(wordUtterance);
-	});
+	syncToggle();
 </script>
-<Layout title='Astro WOTD'>
-	<div
-		id='modal'
-		class='fixed inset-0 z-50 flex justify-center items-center bg-black bg-opacity-75 hidden'
-	>
-		<div
-			class='bg-slate-950 text-white p-8 rounded-lg border-2 border-slate-800'
+
+<Layout title="Word of the Day">
+	<!-- Theme toggle -->
+	<div class="fixed top-5 right-5 z-10">
+		<button
+			id="theme-toggle"
+			class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors"
+			style="border: 1.5px solid var(--border-strong); color: var(--text-muted); font-family: var(--font-sans); letter-spacing: 0.04em;"
+			aria-label="Toggle theme"
 		>
-			<h2 class='text-lg font-bold mb-4'>Select Theme</h2>
-			<div class='flex flex-col md:flex-row justify-between mb-4 gap-6'>
-				<button
-					class='w-64 border-2 border-slate-800 rounded-md py-4 px-6 hover:border-slate-200 transition-colors'
-					id='default-theme'
-				>
-					<p>Default</p>
-					<img src='/themes/default_theme.png' alt='Default theme' />
-				</button>
-				<button
-					class='w-64 border-2 border-slate-800 rounded-md py-4 px-6 hover:border-slate-200 transition-colors'
-					id='red-theme'
-				>
-					<p>Red Theme</p>
-					<img src='/themes/red_theme.png' alt='Red theme' />
-				</button>
-				<button
-					class='w-64 border-2 border-slate-800 rounded-md py-4 px-6 hover:border-slate-200 transition-colors'
-					id='deep-blue-theme'
-				>
-					<p>Deep Blue Theme</p>
-					<img src='/themes/deep_blue_theme.png' alt='Deep Blue theme' />
-				</button>
-			</div>
-		</div>
+			<svg
+				id="sun-icon"
+				width="13"
+				height="13"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<circle cx="12" cy="12" r="4"></circle>
+				<path
+					d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
+				></path>
+			</svg>
+			<svg
+				id="moon-icon"
+				width="13"
+				height="13"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				style="display: none;"
+			>
+				<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+			</svg>
+			<span id="theme-label">Light</span>
+		</button>
 	</div>
+
 	<main
-		class='flex h-screen w-screen flex-col items-center justify-center bg-slate-950 p-4 text-white'
+		class="flex min-h-screen flex-col items-center justify-center p-6"
+		style="background: var(--bg);"
 	>
-		<h1
-			class='m-4 bg-gradient-to-r from-purple-600 to-pink-600 themed bg-clip-text text-2xl font-extrabold uppercase text-transparent sm:text-xl'
-		>
-			Word of the day
-		</h1>
-		<div class='mb-8 flex flex-col items-center justify-center gap-6'>
-			<div class='flex flex-row items-baseline relative'>
+		<div class="flex w-full max-w-lg flex-col items-center gap-7">
+			<!-- Date header -->
+			<div class="text-center">
 				<p
-					class='text-5xl font-bold capitalize underline underline-offset-8'
-					id='word'
+					class="text-xs tracking-widest uppercase"
+					style="color: var(--text-subtle); font-family: var(--font-sans);"
 				>
-					{word}
+					Word of the Day &middot; {today}
 				</p>
-				<Speaker
-					fontSize={32}
-					id='wordSpeakerButton'
-					className='absolute right-[-20%] top-[-5%] translate-y-[50%]'
-				/>
+				<div
+					class="mx-auto mt-2.5 h-px w-9"
+					style="background: var(--text);">
+				</div>
 			</div>
 
-			<span
-				class='whitespace-nowrap rounded-full bg-gradient-to-r px-3.5 py-1.5 text-sm capitalize text-white from-purple-600 to-pink-600 themed'
+			<!-- Word content — starts invisible, fades in after JS populates it -->
+			<div
+				id="word-content"
+				class="flex w-full flex-col items-center gap-7"
+				style="opacity: 0; transform: translateY(6px); transition: opacity 0.3s ease, transform 0.3s ease;"
 			>
-				{typeOfWord}
-			</span>
-			<p class='w-3/4 text-center text-lg font-medium'>{definition}</p>
-			<div class='w-3/4'>
-				<Card text={example!} />
+				<!-- Word + TTS -->
+				<div class="text-center">
+					<div class="mb-3 flex items-center justify-center gap-3">
+						<h1
+							id="word"
+							class="text-6xl font-black leading-none tracking-tight sm:text-7xl"
+							style="font-family: var(--font-serif); color: var(--text);"
+						>
+						</h1>
+						<button
+							id="word-tts"
+							style="color: var(--text-subtle); flex-shrink: 0;"
+							aria-label="Pronounce word"
+						>
+							<svg
+								width="20"
+								height="20"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"
+								></polygon>
+								<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+								<path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+							</svg>
+						</button>
+					</div>
+					<span
+						id="type-of-word"
+						class="inline-block px-3 py-1 text-xs tracking-widest uppercase"
+						style="background: var(--text); color: var(--bg); font-family: var(--font-sans); display: none;"
+					>
+					</span>
+				</div>
+
+				<!-- Definition -->
+				<p
+					id="definition"
+					class="max-w-md text-center text-lg italic leading-relaxed"
+					style="color: var(--text-muted); font-family: var(--font-serif);"
+				>
+				</p>
+
+				<!-- Example card -->
+				<div id="example-card" class="w-full" style="display: none;">
+					<Card text="" />
+				</div>
 			</div>
-		</div>
-		<a href='https://github.com/RNAV2019/astro-wotd' target='_blank'>
-			<Github fontSize={40} />
-		</a>
-		<div class='fixed bottom-4 right-4'>
-			<button
-				class='bg-gradient-to-r from-purple-600 to-pink-600 themed text-white font-bold p-3 rounded-full shadow-lg'
-				id='fab'
-			>
-				<Palette fontSize={20} />
-			</button>
 		</div>
 	</main>
+
+	<!-- Footer -->
+	<footer
+		class="fixed bottom-5 left-5 right-5 flex items-center justify-between"
+	>
+		<a
+			href="https://github.com/RNAV2019/astro-wotd"
+			target="_blank"
+			rel="noopener noreferrer"
+			aria-label="View on GitHub"
+			style="color: var(--text-subtle); line-height: 0;"
+		>
+			<svg
+				width="18"
+				height="18"
+				viewBox="0 0 24 24"
+				fill="currentColor"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<path
+					d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"
+				></path>
+			</svg>
+		</a>
+		<span
+			class="text-xs"
+			style="color: var(--text-subtle); font-family: var(--font-sans); letter-spacing: 0.05em;"
+			>wordnik.com</span
+		>
+	</footer>
 </Layout>

@@ -1,4 +1,6 @@
 ---
+import "../styles/global.css";
+
 export interface Props {
 	title: string;
 }
@@ -6,32 +8,44 @@ export interface Props {
 const { title } = Astro.props;
 ---
 
-<!DOCTYPE html>
-<html lang='en'>
+<!doctype html>
+<html lang="en">
 	<head>
-		<link rel='icon' type='image/icon' href='/favicon.ico' />
-		<link rel='manifest' href='/manifest.json' />
-		<!-- Favicon Stuff -->
-		<link rel='apple-touch-icon' sizes='180x180' href='/apple-touch-icon.png' />
-		<link rel='icon' type='image/png' sizes='32x32' href='/favicon-32x32.png' />
-		<link rel='icon' type='image/png' sizes='16x16' href='/favicon-16x16.png' />
-		<link rel='mask-icon' href='/safari-pinned-tab.svg' />
-		<!-- End Favicon Stuff -->
-		<meta charset='UTF-8' />
-		<meta name='description' content='Astro description' />
-		<meta name='viewport' content='width=device-width' />
-		<meta name='theme-color' content='#0f172a' />
-		<meta name='generator' content={Astro.generator} />
-		<title>{title}</title>
-	</head>
-</html>
-<body>
-	<slot />
-	<script is:inline src='/app.js'></script>
-</body>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta
+			name="description"
+			content="Word of the Day — Daily vocabulary with definitions and pronunciation"
+		/>
+		<meta name="generator" content={Astro.generator} />
+		<meta name="theme-color" content="#0c0a09" />
 
-<style is:global>
-	html {
-		@apply bg-slate-950;
-	}
-</style>
+		<!-- Favicons -->
+		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#fafaf9" />
+		<link rel="manifest" href="/manifest.json" />
+
+		<!-- Fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Inter:wght@400;500;600&display=swap"
+			rel="stylesheet"
+		/>
+
+		<title>{title}</title>
+
+		<!-- Init theme before first paint to prevent flash -->
+		<script is:inline>
+			const theme = localStorage.getItem("theme") || "light";
+			document.documentElement.setAttribute("data-theme", theme);
+		</script>
+	</head>
+	<body>
+		<slot />
+		<script is:inline src="/app.js"></script>
+	</body>
+</html>
